@@ -24,7 +24,7 @@ RUN useradd -m -s /bin/bash -G sudo admin \
 # Switch to the admin account
 USER admin
 WORKDIR /home/admin
-COPY jupyterhub_config.py .
+COPY jupyterhub_config.py /home/admin/jupyterhub_config.py
 
 # Install JupyterLab
 FROM base AS jupyterlab
@@ -68,8 +68,7 @@ FROM base
 # Copy the .bashrc configuration
 COPY --from=support /home/admin/.bashrc /home/admin/
 
-# Copy the JupyterHub configuration and JupyterLab installation from the intermediate images
-COPY --from=config /home/admin/jupyterhub_config.py /home/admin/
+# Copy the JupyterLab installation from the intermediate images
 COPY --from=jupyterlab /home/admin/.local /home/admin/.local
 
 # Copy the libraries installed from the libraries intermediate image
