@@ -4,12 +4,12 @@ FROM ubuntu:22.04 AS base
 # Set default admin password
 ENV admin_password change.it!
 
-# Set the timezone configuration to non-interactive
+# Set to non-interactive
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install -y tzdata
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    tzdata \
     python3.10 \
     python3-pip \
     jupyterhub \ 
@@ -48,10 +48,14 @@ WORKDIR /home/admin/ta-lib
 RUN ./configure --prefix=/usr && make && sudo make install
 WORKDIR /home/admin
 
-RUN echo 'export TA_LIBRARY_PATH=$PREFIX/lib' >> ~/.bashrc && echo 'export TA_INCLUDE_PATH=$PREFIX/include'
+RUN echo 'export TA_LIBRARY_PATH=$PREFIX/lib' >> ~/.bashrc && \
+    echo 'export TA_INCLUDE_PATH=$PREFIX/include' >> ~/.bashrc
 
 RUN echo "Installing Python support libraries:" && \
-    python3 -m pip install ta-lib && python3 -m pip install hnswlib
+    python3 -m pip install ta-lib && \
+    python3 -m pip install hnswlib  && \
+    python3 -m pip install "dask[distributed,dataframe]" && \
+    python3 -m pip install dask_labextension 
 
 # Install libraries specified in requirements.txt
 FROM support AS libraries
@@ -71,13 +75,10 @@ COPY --from=support /home/admin/.bashrc /home/admin/
 # Copy the JupyterLab installation from the intermediate images
 COPY --from=jupyterlab /home/admin/.local /home/admin/.local
 
-# Copy the libraries installed from the libraries intermediate image
-#COPY --from=libraries /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
-
 #Switch to the jupyterhub_user account, set the working directory, and expose the JupyterHub and JupyterLab ports
 USER admin
 WORKDIR /home/admin
 EXPOSE 8000
 
 # Start JupyterHub
-CMD ["jupyterhub", "-f", "/home/admin/jupyterhub_config.py"]
+CMD ["jupyterhub", "-f", "/home/admin/jupyterhub_config.py", "--ip=0.0.0.0", "--port=8000", "--no-ssl"]

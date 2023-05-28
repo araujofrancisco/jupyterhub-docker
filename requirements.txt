@@ -1,6 +1,8 @@
 langchain
 unstructured
 pandas
+scipy
+matplotlib
 chromadb
 tiktoken
 openai
