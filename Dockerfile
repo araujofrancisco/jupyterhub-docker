@@ -9,11 +9,8 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    tzdata \
-    python3.10 \
     python3-pip \
     jupyterhub \ 
-    curl \   
     sudo
 
 # Create a local user account to run pip commands
@@ -42,20 +39,26 @@ RUN python3 -m pip install jupyterlab && \
 FROM jupyterlab AS support
 
 # Download and compile the required files for ta-lib
-RUN curl -L http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz -O && tar xzvf ta-lib-0.4.0-src.tar.gz  
-WORKDIR /home/admin/ta-lib
-
-RUN ./configure --prefix=/usr && make && sudo make install
-WORKDIR /home/admin
+RUN sudo apt-get install build-essential wget -y && \
+    wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
+    tar xzvf ta-lib-0.4.0-src.tar.gz && \
+    cd ta-lib && \
+    ./configure --prefix=/usr && \
+    make && \
+    sudo make install && \
+    cd .. && \
+    rm -rf ta-lib && \
+    sudo apt-get remove -y build-essential wget && \
+    sudo apt-get autoremove -y && \
+    sudo apt-get clean && \
+    sudo rm -rf /var/lib/apt/lists/*
 
 RUN echo 'export TA_LIBRARY_PATH=$PREFIX/lib' >> ~/.bashrc && \
     echo 'export TA_INCLUDE_PATH=$PREFIX/include' >> ~/.bashrc
 
 RUN echo "Installing Python support libraries:" && \
     python3 -m pip install ta-lib && \
-    python3 -m pip install hnswlib  && \
-    python3 -m pip install "dask[distributed,dataframe]" && \
-    python3 -m pip install dask_labextension 
+    python3 -m pip install hnswlib
 
 # Install libraries specified in requirements.txt
 FROM support AS libraries
