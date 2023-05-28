@@ -856,7 +856,6 @@
 #  documentation for your spawner to verify!
 #  Default: ['jupyterhub-singleuser']
 # c.Spawner.cmd = ['jupyterhub-singleuser']
-c.Spawner.cmd = ['jupyter-labhub']
 
 ## Maximum number of consecutive failures to allow before shutting down
 #  JupyterHub.
